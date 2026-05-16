@@ -1,73 +1,80 @@
-# React + TypeScript + Vite
+# PropPilot
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A real-time real estate inbox app. Agencies receive incoming contact requests through a public form and manage them from a protected inbox.
 
-Currently, two official plugins are available:
+**Live demo:** https://prop-pilot-xi.vercel.app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Public contact form** — visitors submit enquiries via `/c/:agencySlug`, no login required
+- **Protected inbox** — agents log in to view and manage contacts for their agency only
+- **Status management** — mark contacts as `new`, `contacted`, or `discarded`
+- **Real-time updates** — new contacts appear instantly via Supabase Realtime (no refresh needed)
+- **Multi-tenancy** — RLS policies ensure each agency only sees its own data
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Layer | Tech |
+|-------|------|
+| Frontend | React 19 + TypeScript + Vite |
+| Styling | Tailwind CSS v4 |
+| Backend / DB | Supabase (Postgres + Auth + Realtime) |
+| Deploy | Vercel |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Routes
+
+| Path | Description | Auth |
+|------|-------------|------|
+| `/c/:agencySlug` | Public contact form | No |
+| `/login` | Agent login | No |
+| `/inbox` | Contact management inbox | Yes |
+
+---
+
+## Demo Accounts
+
+| Agency | Email | Password | Public form |
+|--------|-------|----------|-------------|
+| Suncoast Realty | `agent@suncoast.com` | `demo1234` | `/c/suncoast` |
+| Metro Properties | `agent@metro.com` | `demo1234` | `/c/metro` |
+
+---
+
+## Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Add environment variables
+cp .env.example .env
+# Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+
+# Start dev server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Variable | Description |
+|----------|-------------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon/public key |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Database Schema
+
+```sql
+agencies  (id, name, slug, created_at)
+profiles  (id → auth.users, agency_id, email)
+contacts  (id, agency_id, name, email, message, status, created_at)
 ```
+
+Row Level Security is enabled on all tables — agents can only read and update contacts belonging to their own agency. The public form can insert contacts without authentication.
